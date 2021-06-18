@@ -168,6 +168,7 @@ func (a *App) render(name string, w http.ResponseWriter, ctx interface{}) {
 	buf, err := a.Templates.Exec(name, ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	_, err = buf.WriteTo(w)
