@@ -19,10 +19,10 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	shortuuid "github.com/lithammer/shortuuid/v3"
 	"github.com/prologic/tube/importers"
 	"github.com/prologic/tube/media"
 	"github.com/prologic/tube/utils"
-	"github.com/renstrom/shortuuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -168,6 +168,7 @@ func (a *App) render(name string, w http.ResponseWriter, ctx interface{}) {
 	buf, err := a.Templates.Exec(name, ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	_, err = buf.WriteTo(w)
@@ -188,11 +189,13 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 		ctx := &struct {
 			Sort     string
 			Quality  string
+			Config   *Config
 			Playing  *media.Video
 			Playlist media.Playlist
 		}{
 			Sort:     sort,
 			Quality:  quality,
+			Config:   a.Config,
 			Playing:  &media.Video{ID: ""},
 			Playlist: a.Library.Playlist(),
 		}
@@ -204,8 +207,12 @@ func (a *App) indexHandler(w http.ResponseWriter, r *http.Request) {
 // HTTP handler for /upload
 func (a *App) uploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		ctx := map[string]interface{}{
-			"MAX_UPLOAD_SIZE": a.Config.Server.MaxUploadSize,
+		ctx := &struct {
+			Config  *Config
+			Playing *media.Video
+		}{
+			Config:  a.Config,
+			Playing: &media.Video{ID: ""},
 		}
 		a.render("upload", w, ctx)
 	} else if r.Method == "POST" {
@@ -566,11 +573,13 @@ func (a *App) pageHandler(w http.ResponseWriter, r *http.Request) {
 		ctx := &struct {
 			Sort     string
 			Quality  string
+			Config   *Config
 			Playing  *media.Video
 			Playlist media.Playlist
 		}{
 			Sort:     sort,
 			Quality:  quality,
+			Config:   a.Config,
 			Playing:  &media.Video{ID: ""},
 			Playlist: a.Library.Playlist(),
 		}
@@ -621,11 +630,13 @@ func (a *App) pageHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := &struct {
 		Sort     string
 		Quality  string
+		Config   *Config
 		Playing  *media.Video
 		Playlist media.Playlist
 	}{
 		Sort:     sort,
 		Quality:  quality,
+		Config:   a.Config,
 		Playing:  playing,
 		Playlist: playlist,
 	}
